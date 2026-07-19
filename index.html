@@ -134,7 +134,6 @@
             text-align: center;
             min-height: 100vh;
         }
-        /* SUPPRESSION DU .landing-content (cadre) */
         #landingPage .landing-title {
             font-size: 2rem;
             font-weight: 900;
@@ -492,6 +491,16 @@
             font-weight: 600;
             color: var(--kacm-text);
         }
+        /* Style pour le nom Admin avec couronne dorée */
+        .news-card .meta-author .author-name.admin-name {
+            color: #C8102E;
+            font-weight: 700;
+        }
+        .news-card .meta-author .admin-crown {
+            color: #FFD700;
+            font-size: 14px;
+            margin-left: 2px;
+        }
         .news-card .meta-date {
             font-size: 11px;
             color: #888;
@@ -823,6 +832,16 @@
         }
         .read-modal-body .read-meta { display: flex; justify-content: space-between; border-top: 1px solid #eee; padding-top: 12px; font-size: 13px; color: #555; flex-wrap: wrap; gap: 6px; }
         .read-modal-body .read-meta i { color: var(--kacm-red); margin-left: 4px; }
+        /* Style pour le nom Admin avec couronne dans la modale de lecture */
+        .read-modal-body .read-author .admin-name {
+            color: #C8102E;
+            font-weight: 700;
+        }
+        .read-modal-body .read-author .admin-crown {
+            color: #FFD700;
+            font-size: 16px;
+            margin-left: 4px;
+        }
 
         /* ===== FOOTER DE LA MODALE READ - BLANC AVEC TEXTE ROUGE ===== */
         .read-modal-footer {
@@ -1465,6 +1484,12 @@
                     const langLabel = lang === 'ar' ? '🇲🇦 العربية' : '🇫🇷 Français';
                     const langBadgeClass = lang === 'ar' ? 'ar' : 'fr';
                     
+                    // Vérifier si l'article a été publié par l'admin
+                    const isAdminAuthor = article.author === 'Admin M.Seddik';
+                    const authorDisplay = isAdminAuthor ? 
+                        `<span class="admin-crown">👑</span> <span class="author-name admin-name">Admin M.Seddik</span>` : 
+                        `<span class="author-name">${article.author}</span>`;
+                    
                     html += `
                         <div class="news-card" id="article-${article.id}">
                             <img src="${imgSrc}" class="card-img-top" loading="lazy">
@@ -1476,7 +1501,7 @@
                                     <button class="btn-outline-red" onclick="openReadModal(${article.id})"><i class="fas fa-book-open"></i> قراءة المزيد</button>
                                 </div>
                                 <div class="card-footer-meta">
-                                    <div class="meta-author"><i class="fas fa-user-circle"></i><span class="author-name">${article.author}</span></div>
+                                    <div class="meta-author"><i class="fas fa-user-circle"></i>${authorDisplay}</div>
                                     <div class="meta-date"><i class="fas fa-calendar-alt"></i> ${formatDate(article.date)}</div>
                                 </div>
                                 <div class="interaction-bar">
@@ -1649,10 +1674,13 @@
                     };
                 }
 
+                // Si c'est l'admin qui publie, on force le nom "Admin M.Seddik"
+                const finalAuthor = isAdmin() ? 'Admin M.Seddik' : author;
+
                 try {
                     const response = await fetch(APPS_SCRIPT_URL, {
                         method: "POST",
-                        body: JSON.stringify({ action: "insert", title: title, text: text, author: author, image: imageData })
+                        body: JSON.stringify({ action: "insert", title: title, text: text, author: finalAuthor, image: imageData })
                     });
                     const res = await response.json();
                     if(res.success) {
@@ -1828,7 +1856,14 @@
                 document.getElementById('readTitle').textContent = a.title;
                 readTextEl.className = 'read-text ' + (lang === 'fr' ? 'ltr' : 'rtl');
                 readTextEl.innerHTML = formatTextWithParagraphs(a.text);
-                document.getElementById('readAuthor').textContent = a.author;
+                
+                // Afficher le nom avec couronne si c'est l'admin
+                const isAdminAuthor = a.author === 'Admin M.Seddik';
+                const authorDisplay = isAdminAuthor ? 
+                    `<span class="admin-crown">👑</span> <span class="admin-name">Admin M.Seddik</span>` : 
+                    a.author;
+                document.getElementById('readAuthor').innerHTML = authorDisplay;
+                
                 document.getElementById('readDate').textContent = formatDate(a.date);
                 currentReadArticleId = id;
                 readModal.show();

@@ -443,7 +443,7 @@
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            text-align: justify;
+            text-align: center;  /* CHANGÉ : centré */
         }
         .news-card .card-text {
             font-size: 13.5px;
@@ -796,7 +796,7 @@
             font-weight: 700; 
             color: var(--kacm-red-dark); 
             margin-bottom: 10px; 
-            text-align: justify;
+            text-align: center;  /* CHANGÉ : centré */
         }
         .read-modal-body .read-text { 
             font-size: 15px; 
@@ -1113,7 +1113,7 @@
         </div>
     </div>
 
-    <!-- ===== READ MODAL (AVEC STORE UNIQUEMENT DANS LE FOOTER) ===== -->
+    <!-- ===== READ MODAL ===== -->
     <div class="modal modal-fullscreen" id="readMoreModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-fullscreen">
             <div class="modal-content">
@@ -1129,9 +1129,7 @@
                         <span class="read-author"><i class="fas fa-user-circle"></i> <span id="readAuthor"></span></span>
                         <span class="read-date"><i class="fas fa-calendar-alt"></i> <span id="readDate"></span></span>
                     </div>
-                    <!-- BANNIÈRE SUPPRIMÉE ICI -->
                 </div>
-                <!-- ===== FOOTER FIXÉ BLANC AVEC MESSAGE ROUGE ===== -->
                 <div class="read-modal-footer">
                     <a href="https://kacmstore.vercel.app" target="_blank" class="footer-store-link">
                         <i class="fas fa-store"></i>

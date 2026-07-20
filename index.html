@@ -843,6 +843,60 @@
             margin-left: 4px;
         }
 
+        /* Style pour la barre d'interaction dans le modal de lecture */
+        .read-modal-body .interaction-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 2px solid #eee;
+            flex-wrap: wrap;
+        }
+        .read-modal-body .interaction-bar .like-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: transparent;
+            border: none;
+            font-size: 14px;
+            color: #555;
+            cursor: pointer;
+            transition: var(--transition);
+            padding: 3px 8px;
+            border-radius: 20px;
+        }
+        .read-modal-body .interaction-bar .like-btn:hover {
+            color: var(--kacm-red);
+            background: rgba(200, 16, 46, 0.08);
+        }
+        .read-modal-body .interaction-bar .like-btn i {
+            font-size: 16px;
+        }
+        .read-modal-body .interaction-bar .like-btn.liked i {
+            color: var(--kacm-red);
+        }
+        .read-modal-body .interaction-bar .comment-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: transparent;
+            border: none;
+            font-size: 14px;
+            color: #555;
+            cursor: pointer;
+            transition: var(--transition);
+            padding: 3px 8px;
+            border-radius: 20px;
+        }
+        .read-modal-body .interaction-bar .comment-btn:hover {
+            color: var(--kacm-red);
+            background: rgba(200, 16, 46, 0.08);
+        }
+        .read-modal-body .interaction-bar .comment-btn i {
+            font-size: 16px;
+        }
+
         /* ===== FOOTER DE LA MODALE READ - BLANC AVEC TEXTE ROUGE ===== */
         .read-modal-footer {
             border-top: 2px solid #eee;
@@ -1148,6 +1202,16 @@
                     <div class="read-meta">
                         <span class="read-author"><i class="fas fa-user-circle"></i> <span id="readAuthor"></span></span>
                         <span class="read-date"><i class="fas fa-calendar-alt"></i> <span id="readDate"></span></span>
+                    </div>
+                    
+                    <!-- ===== شريط التفاعل (الإعجابات والتعليقات) ===== -->
+                    <div class="interaction-bar">
+                        <button class="like-btn" onclick="toggleLikeFromRead(parseInt(this.dataset.articleId))" id="readLikeBtn" data-article-id="">
+                            <i class="fas fa-heart"></i> <span id="readLikeCount">0</span>
+                        </button>
+                        <button class="comment-btn" onclick="openCommentsFromRead(parseInt(this.dataset.articleId))" id="readCommentBtn" data-article-id="">
+                            <i class="fas fa-comment"></i> <span id="readCommentCount">0</span>
+                        </button>
                     </div>
                 </div>
                 <div class="read-modal-footer">
@@ -1538,6 +1602,7 @@
             filterAr.addEventListener('click', () => setFilter('ar'));
             filterFr.addEventListener('click', () => setFilter('fr'));
 
+            // === Fonctions de like et commentaires ===
             window.toggleLike = async function(id) {
                 const article = newsData.find(item => item.id === id);
                 if (!article) return;
@@ -1555,7 +1620,41 @@
                 } catch(e) { console.error(e); }
             };
 
+            // Fonction pour le like depuis le modal de lecture
+            window.toggleLikeFromRead = async function(id) {
+                const article = newsData.find(item => item.id === id);
+                if (!article) return;
+                
+                article.likes++;
+                // Mettre à jour le compteur dans le modal
+                const readLikeCount = document.getElementById('readLikeCount');
+                if (readLikeCount) readLikeCount.textContent = article.likes;
+                document.getElementById('readLikeBtn')?.querySelector('i')?.classList.add('liked');
+                
+                // Mettre à jour le compteur dans la carte principale si elle existe
+                const countSpan = document.getElementById(`likeCount-${id}`);
+                if (countSpan) countSpan.textContent = article.likes;
+                document.getElementById(`likeBtn-${id}`)?.querySelector('i')?.classList.add('liked');
+
+                try {
+                    await fetch(APPS_SCRIPT_URL, {
+                        method: "POST",
+                        body: JSON.stringify({ action: "update_like", id: id })
+                    });
+                } catch(e) { console.error(e); }
+            };
+
             window.openComments = function(id) {
+                currentCommentArticleId = id;
+                const article = newsData.find(item => item.id === id);
+                if (!article) return;
+                renderComments(article);
+                commentsModal.show();
+                updateAdminCommentUI();
+            };
+
+            // Fonction pour ouvrir les commentaires depuis le modal de lecture
+            window.openCommentsFromRead = function(id) {
                 currentCommentArticleId = id;
                 const article = newsData.find(item => item.id === id);
                 if (!article) return;
@@ -1865,6 +1964,28 @@
                 document.getElementById('readAuthor').innerHTML = authorDisplay;
                 
                 document.getElementById('readDate').textContent = formatDate(a.date);
+
+                // ===== Mise à jour des likes et commentaires dans le modal de lecture =====
+                const readLikeBtn = document.getElementById('readLikeBtn');
+                const readLikeCount = document.getElementById('readLikeCount');
+                const readCommentCount = document.getElementById('readCommentCount');
+                
+                // Mettre à jour l'ID de l'article sur les boutons
+                readLikeBtn.dataset.articleId = id;
+                document.getElementById('readCommentBtn').dataset.articleId = id;
+                
+                // Mettre à jour les compteurs
+                readLikeCount.textContent = a.likes || 0;
+                readCommentCount.textContent = a.comments ? a.comments.length : 0;
+                
+                // Mettre à jour l'état du cœur (liké ou non)
+                const heartIcon = readLikeBtn.querySelector('i');
+                if (a.likes > 0) {
+                    heartIcon.classList.add('liked');
+                } else {
+                    heartIcon.classList.remove('liked');
+                }
+
                 currentReadArticleId = id;
                 readModal.show();
             };
@@ -1889,7 +2010,9 @@
             // Exposer les fonctions globalement
             window.openReadModal = openReadModal;
             window.toggleLike = toggleLike;
+            window.toggleLikeFromRead = toggleLikeFromRead;
             window.openComments = openComments;
+            window.openCommentsFromRead = openCommentsFromRead;
             window.deleteComment = deleteComment;
             window.deleteArticle = deleteArticle;
             window.updateSelectionInfo = updateSelectionInfo;

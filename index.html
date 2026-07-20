@@ -1533,11 +1533,12 @@
                 }
 
                 const admin = isAdmin();
-                // 🔥 TRI : du plus RÉCENT au plus ANCIEN (dernier ajouté en premier)
+                // 🔥 TRI : du plus RÉCENT au plus ANCIEN (basé sur le timestamp ou l'ID)
                 const sorted = [...filtered].sort((a, b) => {
-                    const dateA = new Date(a.date);
-                    const dateB = new Date(b.date);
-                    return dateB - dateA;
+                    // Utiliser le timestamp si disponible, sinon l'ID (qui est incrémental)
+                    const timeA = a.timestamp || a.id || 0;
+                    const timeB = b.timestamp || b.id || 0;
+                    return timeB - timeA;
                 });
 
                 let html = '';
@@ -1775,11 +1776,21 @@
 
                 // Si c'est l'admin qui publie, on force le nom "Admin M.Seddik"
                 const finalAuthor = isAdmin() ? 'Admin M.Seddik' : author;
+                
+                // Ajouter un timestamp pour le tri
+                const timestamp = Date.now();
 
                 try {
                     const response = await fetch(APPS_SCRIPT_URL, {
                         method: "POST",
-                        body: JSON.stringify({ action: "insert", title: title, text: text, author: finalAuthor, image: imageData })
+                        body: JSON.stringify({ 
+                            action: "insert", 
+                            title: title, 
+                            text: text, 
+                            author: finalAuthor, 
+                            image: imageData,
+                            timestamp: timestamp // Ajout du timestamp
+                        })
                     });
                     const res = await response.json();
                     if(res.success) {
@@ -1820,6 +1831,9 @@
                     };
                 }
 
+                // Ajouter un timestamp pour le tri
+                const timestamp = Date.now();
+
                 try {
                     const response = await fetch(APPS_SCRIPT_URL, {
                         method: "POST",
@@ -1828,7 +1842,8 @@
                             title: title, 
                             text: content, 
                             author: name, 
-                            image: imageData 
+                            image: imageData,
+                            timestamp: timestamp // Ajout du timestamp
                         })
                     });
                     const res = await response.json();

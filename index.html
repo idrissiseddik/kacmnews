@@ -423,12 +423,41 @@
             box-shadow: var(--shadow-md);
             transform: translateY(-2px);
         }
+        
+        /* ===== STYLE DES IMAGES DANS LES CARTES ===== */
         .news-card .card-img-top {
             width: 100%;
-            height: 180px;
+            height: 200px;
             object-fit: cover;
+            object-position: center;
             background: var(--kacm-red-light);
+            transition: object-fit 0.3s ease;
         }
+        
+        /* Mode "contain" - affiche l'image complète sans coupure */
+        .news-card .card-img-top.contain {
+            object-fit: contain;
+            background: #f0f0f0;
+            padding: 4px;
+        }
+        
+        /* ===== STYLE DES IMAGES DANS LE MODAL DE LECTURE ===== */
+        .read-modal-body .read-image {
+            width: 100%;
+            max-height: 350px;
+            object-fit: cover;
+            object-position: center;
+            border-radius: 12px;
+            margin-bottom: 14px;
+            background: #f5f5f5;
+            transition: object-fit 0.3s ease;
+        }
+        .read-modal-body .read-image.contain {
+            object-fit: contain;
+            background: #f5f5f5;
+            padding: 8px;
+        }
+
         .news-card .card-body {
             padding: 14px 16px 16px;
         }
@@ -535,6 +564,7 @@
             gap: 8px;
             margin-top: 10px;
             flex-wrap: wrap;
+            align-items: center;
         }
         .news-card .card-actions .btn-outline-red {
             padding: 5px 16px;
@@ -556,6 +586,10 @@
         }
         .news-card .card-actions .btn-outline-red:active {
             transform: scale(0.94);
+        }
+        .news-card .card-actions .btn-outline-red.small {
+            font-size: 10px;
+            padding: 2px 10px;
         }
 
         .news-card .interaction-bar {
@@ -650,7 +684,7 @@
         }
         .skeleton-card .skeleton-img {
             width: 100%;
-            height: 180px;
+            height: 200px;
             background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
             background-size: 200% 100%;
             animation: shimmer 1.5s infinite;
@@ -799,7 +833,21 @@
         .modal-fullscreen .modal-footer .btn-primary { background: var(--kacm-red); border-color: var(--kacm-red); }
 
         /* ===== READ MODAL ===== */
-        .read-modal-body .read-image { width: 100%; max-height: 260px; object-fit: cover; border-radius: 12px; margin-bottom: 14px; }
+        .read-modal-body .read-image { 
+            width: 100%; 
+            max-height: 350px; 
+            object-fit: cover; 
+            object-position: center;
+            border-radius: 12px; 
+            margin-bottom: 14px; 
+            background: #f5f5f5;
+            transition: object-fit 0.3s ease;
+        }
+        .read-modal-body .read-image.contain {
+            object-fit: contain;
+            background: #f5f5f5;
+            padding: 8px;
+        }
         .read-modal-body .read-title { 
             font-size: 22px; 
             font-weight: 700; 
@@ -1025,7 +1073,8 @@
             .app-header .header-line1 { font-size: 19px; }
             .app-header .header-line2 { font-size: 15px; }
             .app-header .header-line3 { font-size: 13px; }
-            .news-card .card-img-top { height: 150px; }
+            .news-card .card-img-top { height: 160px; }
+            .skeleton-card .skeleton-img { height: 160px; }
             .fab { bottom: 68px; padding: 8px 18px; font-size: 13px; }
             .app-footer { font-size: 11px; padding: 8px 10px; gap: 4px; }
             .app-footer .footer-ball { font-size: 1rem; }
@@ -1034,6 +1083,7 @@
             .lang-selector .lang-option { font-size: 12px; padding: 6px 8px; }
             .read-modal-footer .footer-store-link { font-size: 13px; padding: 4px 12px; }
             .read-modal-footer .footer-store-link i { font-size: 18px; }
+            .read-modal-body .read-image { max-height: 250px; }
         }
         @media (min-width: 768px) {
             #landingPage .landing-image { max-width: 280px; }
@@ -1487,6 +1537,8 @@
                     const res = await response.json();
                     if (res.success) {
                         newsData = res.data;
+                        // Charger les préférences d'affichage des images
+                        loadImageFitPreferences();
                     }
                 } catch (e) {
                     console.error("Erreur Cloud Select:", e);
@@ -1496,6 +1548,22 @@
                     renderAllNews();
                     hideLoader();
                 }
+            }
+
+            // === Charger les préférences d'affichage des images ===
+            function loadImageFitPreferences() {
+                newsData.forEach(article => {
+                    try {
+                        const saved = localStorage.getItem(`imageFit_${article.id}`);
+                        if (saved) {
+                            article.imageFit = saved;
+                        } else {
+                            article.imageFit = 'cover'; // Mode par défaut
+                        }
+                    } catch(e) {
+                        article.imageFit = 'cover';
+                    }
+                });
             }
 
             // === Mise à jour des compteurs ===
@@ -1517,6 +1585,38 @@
                 return newsData.filter(a => detectLanguage(a.text) === currentFilter);
             }
 
+            // === Fonction pour basculer entre cover et contain ===
+            window.toggleImageFit = function(id) {
+                const article = newsData.find(item => item.id === id);
+                if (!article) return;
+                
+                // Basculer entre 'cover' et 'contain'
+                article.imageFit = article.imageFit === 'contain' ? 'cover' : 'contain';
+                
+                // Mettre à jour l'affichage
+                const card = document.getElementById(`article-${id}`);
+                if (card) {
+                    const img = card.querySelector('.card-img-top');
+                    if (img) {
+                        img.classList.toggle('contain');
+                        const label = document.getElementById(`fitLabel-${id}`);
+                        if (label) {
+                            label.textContent = article.imageFit === 'cover' ? 'تغطية' : 'كامل';
+                        }
+                        // Mettre à jour l'icône
+                        const icon = card.querySelector('.card-actions .btn-outline-red:last-child i');
+                        if (icon) {
+                            icon.className = `fas fa-${article.imageFit === 'cover' ? 'expand' : 'compress'}`;
+                        }
+                    }
+                }
+                
+                // Sauvegarder la préférence
+                try {
+                    localStorage.setItem(`imageFit_${id}`, article.imageFit);
+                } catch(e) {}
+            };
+
             function renderAllNews() {
                 const filtered = getFilteredArticles();
                 
@@ -1533,9 +1633,8 @@
                 }
 
                 const admin = isAdmin();
-                // 🔥 TRI : du plus RÉCENT au plus ANCIEN (basé sur le timestamp ou l'ID)
+                // TRI : du plus RÉCENT au plus ANCIEN
                 const sorted = [...filtered].sort((a, b) => {
-                    // Utiliser le timestamp si disponible, sinon l'ID (qui est incrémental)
                     const timeA = a.timestamp || a.id || 0;
                     const timeB = b.timestamp || b.id || 0;
                     return timeB - timeA;
@@ -1555,15 +1654,25 @@
                         `<span class="admin-crown">👑</span> <span class="author-name admin-name">Admin M.Seddik</span>` : 
                         `<span class="author-name">${article.author}</span>`;
                     
+                    // Déterminer le mode d'affichage de l'image
+                    const imageFit = article.imageFit || 'cover';
+                    const fitClass = imageFit === 'contain' ? 'contain' : '';
+                    const fitIcon = imageFit === 'cover' ? 'expand' : 'compress';
+                    const fitLabel = imageFit === 'cover' ? 'تغطية' : 'كامل';
+                    
                     html += `
                         <div class="news-card" id="article-${article.id}">
-                            <img src="${imgSrc}" class="card-img-top" loading="lazy">
+                            <img src="${imgSrc}" class="card-img-top ${fitClass}" loading="lazy" alt="${article.title}" />
                             <div class="card-body">
                                 <div class="card-title">${article.title}</div>
                                 <p class="card-text ${textClass}">${article.text}</p>
                                 <div class="card-actions">
                                     <span class="lang-badge ${langBadgeClass}">${langLabel}</span>
                                     <button class="btn-outline-red" onclick="openReadModal(${article.id})"><i class="fas fa-book-open"></i> قراءة المزيد</button>
+                                    <button class="btn-outline-red small" onclick="toggleImageFit(${article.id})">
+                                        <i class="fas fa-${fitIcon}"></i> 
+                                        <span id="fitLabel-${article.id}">${fitLabel}</span>
+                                    </button>
                                 </div>
                                 <div class="card-footer-meta">
                                     <div class="meta-author"><i class="fas fa-user-circle"></i>${authorDisplay}</div>
@@ -1789,7 +1898,7 @@
                             text: text, 
                             author: finalAuthor, 
                             image: imageData,
-                            timestamp: timestamp // Ajout du timestamp
+                            timestamp: timestamp
                         })
                     });
                     const res = await response.json();
@@ -1843,7 +1952,7 @@
                             text: content, 
                             author: name, 
                             image: imageData,
-                            timestamp: timestamp // Ajout du timestamp
+                            timestamp: timestamp
                         })
                     });
                     const res = await response.json();
@@ -1965,8 +2074,13 @@
                 
                 const lang = detectLanguage(a.text);
                 const readTextEl = document.getElementById('readText');
+                const readImage = document.getElementById('readImage');
                 
-                document.getElementById('readImage').src = a.image || 'https://via.placeholder.com/600x400/C8102E/FFFFFF?text=KACM';
+                // Appliquer le mode d'affichage de l'image
+                const imageFit = a.imageFit || 'cover';
+                readImage.className = 'read-image' + (imageFit === 'contain' ? ' contain' : '');
+                readImage.src = a.image || 'https://via.placeholder.com/600x400/C8102E/FFFFFF?text=KACM';
+                
                 document.getElementById('readTitle').textContent = a.title;
                 readTextEl.className = 'read-text ' + (lang === 'fr' ? 'ltr' : 'rtl');
                 readTextEl.innerHTML = formatTextWithParagraphs(a.text);
@@ -2031,6 +2145,7 @@
             window.deleteComment = deleteComment;
             window.deleteArticle = deleteArticle;
             window.updateSelectionInfo = updateSelectionInfo;
+            window.toggleImageFit = toggleImageFit;
 
             fetchNewsFromCloud();
         })();

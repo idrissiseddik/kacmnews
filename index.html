@@ -945,6 +945,36 @@
             font-size: 16px;
         }
 
+        /* ===== BOUTON RETOUR EN BAS DU MODAL DE LECTURE ===== */
+        .read-modal-back-btn {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 2px solid #eee;
+            text-align: center;
+        }
+        .read-modal-back-btn .btn-back-main {
+            background: var(--kacm-red);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 10px 28px;
+            font-size: 15px;
+            font-weight: 600;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(200, 16, 46, 0.25);
+        }
+        .read-modal-back-btn .btn-back-main:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 24px rgba(200, 16, 46, 0.35);
+        }
+        .read-modal-back-btn .btn-back-main:active {
+            transform: scale(0.96);
+        }
+
         /* ===== FOOTER DE LA MODALE READ - BLANC AVEC TEXTE ROUGE ===== */
         .read-modal-footer {
             border-top: 2px solid #eee;
@@ -1084,6 +1114,7 @@
             .read-modal-footer .footer-store-link { font-size: 13px; padding: 4px 12px; }
             .read-modal-footer .footer-store-link i { font-size: 18px; }
             .read-modal-body .read-image { max-height: 250px; }
+            .read-modal-back-btn .btn-back-main { font-size: 13px; padding: 8px 20px; }
         }
         @media (min-width: 768px) {
             #landingPage .landing-image { max-width: 280px; }
@@ -1263,6 +1294,13 @@
                             <i class="fas fa-comment"></i> <span id="readCommentCount">0</span>
                         </button>
                     </div>
+
+                    <!-- ===== زر العودة إلى الأخبار (أسفل شريط التفاعل) ===== -->
+                    <div class="read-modal-back-btn">
+                        <button class="btn-back-main" onclick="closeReadModal()">
+                            <i class="fas fa-arrow-right"></i> العودة إلى الأخبار
+                        </button>
+                    </div>
                 </div>
                 <div class="read-modal-footer">
                     <a href="https://kacmstore.vercel.app" target="_blank" class="footer-store-link">
@@ -1408,6 +1446,14 @@
                 const d = new Date(dateStr);
                 return isNaN(d) ? dateStr : d.toLocaleDateString('ar-MA', { year: 'numeric', month: 'long', day: 'numeric' });
             }
+
+            // === دالة إغلاق نافذة تفاصيل الخبر والعودة إلى الصفحة الرئيسية ===
+            window.closeReadModal = function() {
+                const readModalInstance = bootstrap.Modal.getInstance(document.getElementById('readMoreModal'));
+                if (readModalInstance) {
+                    readModalInstance.hide();
+                }
+            };
 
             // === Détection de la langue (arabe ou français) ===
             function detectLanguage(text) {

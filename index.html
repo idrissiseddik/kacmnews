@@ -461,17 +461,16 @@
         .news-card .card-body {
             padding: 14px 16px 16px;
         }
+        /* ===== MODIFICATION : TITRE COMPLET SANS LIMITATION ===== */
         .news-card .card-title {
             font-size: 17px;
             font-weight: 700;
             color: var(--kacm-red-dark);
             margin-bottom: 6px;
             line-height: 1.3;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
             text-align: center;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
         .news-card .card-text {
             font-size: 13.5px;
